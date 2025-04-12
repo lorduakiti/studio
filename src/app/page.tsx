@@ -159,9 +159,24 @@ const NeuralNetworkAnimation = () => {
       window.removeEventListener('mousemove', onMouseMove, false);
       cancelAnimationFrame(animationFrameIdRef.current);
       renderer.dispose();
+
+      // Dispose of scene and its children
       if (sceneRef.current) {
+        sceneRef.current.children.forEach(child => {
+          if ((child as THREE.Mesh).geometry) {
+            ((child as THREE.Mesh).geometry as THREE.BufferGeometry).dispose();
+          }
+          if ((child as THREE.Mesh).material) {
+            if (Array.isArray(((child as THREE.Mesh).material as THREE.Material))) {
+                ((child as THREE.Mesh).material as THREE.Material[]).forEach(material => material.dispose());
+            } else {
+                (((child as THREE.Mesh).material as THREE.Material)).dispose();
+            }
+          }
+        });
         sceneRef.current.dispose();
       }
+
       geometry.dispose();
       lineMaterial.dispose();
       nodesArray.forEach(node => (node.material as THREE.Material).dispose());
@@ -313,4 +328,3 @@ export default function Page() {
     </>
   );
 }
-
