@@ -27,7 +27,6 @@ const NeuralNetworkAnimation = () => {
   const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [creationRate, setCreationRate] = useState(1); // Nodes per second
   const [zoomLevel, setZoomLevel] = useState(0); // Initial zoom level
-  const ZOOM_SPEED = 0.0001; // Zoom speed
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -90,8 +89,9 @@ const NeuralNetworkAnimation = () => {
     };
 
       const handleZoom = (event: WheelEvent) => {
+      event.preventDefault();
       // Adjust zoom level based on mouse wheel delta
-      let zoomDelta = event.deltaY * ZOOM_SPEED;
+      let zoomDelta = event.deltaY * 0.0001; //ZOOM_SPEED;
       let newZoomLevel = zoomLevel + zoomDelta;
 
       // Clamp zoom level to prevent zooming in too close or too far out
@@ -219,8 +219,9 @@ const NeuralNetworkAnimation = () => {
 
   const updateCameraPosition = (newZoomLevel: number) => {
     if (cameraRef.current) {
-      const zoomFactor = 1 + (newZoomLevel / 100) * 9; // Scale zoom level to 1-10x
-      cameraRef.current.position.z = 10 / zoomFactor; // Invert zoom for natural behavior
+      const maxZoom = 10; // Define the maximum zoom level
+      const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
+      cameraRef.current.position.z = maxZoom / zoomFactor;
     }
   };
 
@@ -306,6 +307,7 @@ const NeuralNetworkAnimation = () => {
                 step={0.1}
                 onValueChange={(value) => setAnimationSpeed(value[0])}
               />
+                <span className="text-sm text-muted-foreground">{animationSpeed.toFixed(1)}</span>
             </div>
             <div className="flex flex-col items-start space-y-1">
                 <label htmlFor="rotationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white">Rotation Speed</label>
@@ -317,6 +319,7 @@ const NeuralNetworkAnimation = () => {
                 step={0.1}
                 onValueChange={(value) => setRotationSpeed(value[0])}
               />
+              <span className="text-sm text-muted-foreground">{rotationSpeed.toFixed(1)}</span>
             </div>
              <div className="flex flex-col items-start space-y-1">
                 <label htmlFor="zoomLevel" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white">Zoom</label>
@@ -325,9 +328,10 @@ const NeuralNetworkAnimation = () => {
                 defaultValue={[zoomLevel]}
                 max={100}
                 min={0}
-                step={0.1}
+                step={1}
                 onValueChange={(value) => setZoomLevel(value[0])}
               />
+                <span className="text-sm text-muted-foreground">{zoomLevel} %</span>
             </div>
           </CardContent>
         </Card>
