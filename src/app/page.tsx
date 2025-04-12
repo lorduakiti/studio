@@ -174,7 +174,9 @@ const NeuralNetworkAnimation = () => {
             }
           }
         });
-        sceneRef.current.dispose();
+        if (sceneRef.current.dispose) {
+          sceneRef.current.dispose();
+        }
       }
 
       geometry.dispose();
