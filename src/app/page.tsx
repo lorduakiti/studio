@@ -107,11 +107,11 @@ const NeuralNetworkAnimation = () => {
 
         // If the node has no connections, make it gray.
         let color;
-        if (numberOfConnections === 0) {
-          color = new THREE.Color(0x808080); // Gray color
-        } else {
+        // if (numberOfConnections === 0) {
+        //   color = new THREE.Color(0x808080); // Gray color
+        // } else {
           color = getColorForNumberOfConnections(normalizedConnections);
-        }
+        // }
 
         // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
         if (node.material instanceof THREE.MeshBasicMaterial) {
