@@ -26,7 +26,7 @@ const NeuralNetworkAnimation = () => {
   const [numConnections, setNumConnections] = useState(100);
   const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [creationRate, setCreationRate] = useState(1); // Nodes per second
-  const [zoomLevel, setZoomLevel] = useState(100); // Initial zoom level
+  const [zoomLevel, setZoomLevel] = useState(0); // Initial zoom level
   const ZOOM_SPEED = 0.01; // Zoom speed
 
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -219,12 +219,9 @@ const NeuralNetworkAnimation = () => {
 
   const updateCameraPosition = (newZoomLevel: number) => {
     if (cameraRef.current) {
-      // Calculate the new Z position based on the zoom level
-      const zoomPercentage = newZoomLevel / 100; // Normalize zoom level to 0-1 range
-      // Adjust the camera's Z position based on the zoom level.
-      // The smaller the zoomPercentage, the further away the camera is.
-      // You can adjust the constants (10 and 11) to change the zoom range.
-      cameraRef.current.position.z = 10 + (zoomPercentage * 20); // Example: Zoom between 10 and 30
+      const maxZoom = 10; // Define the maximum zoom level
+      const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
+      cameraRef.current.position.z = maxZoom / zoomFactor;
     }
   };
 
@@ -329,7 +326,7 @@ const NeuralNetworkAnimation = () => {
                 defaultValue={[zoomLevel]}
                 max={100}
                 min={0}
-                step={1}
+                step={0.1}
                 onValueChange={(value) => setZoomLevel(value[0])}
               />
             </div>
