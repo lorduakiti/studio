@@ -42,6 +42,7 @@ const NeuralNetworkAnimation = () => {
   const connectionsRef = useRef<THREE.Line[]>([]);
   const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
+  const originalNodeColorsRef = useRef<{[key: number]: THREE.Color}>({});
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -160,7 +161,26 @@ const NeuralNetworkAnimation = () => {
         if (intersects.length > 0) {
             const intersectedNode = intersects[0].object as THREE.Mesh;
             setHoveredNodeId(intersectedNode.userData.id);
+
+             // Store the original color
+            if (intersectedNode.userData.id && !originalNodeColorsRef.current[intersectedNode.userData.id]) {
+              // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
+                originalNodeColorsRef.current[intersectedNode.userData.id] = intersectedNode.material.color.clone();
+            }
+
+            // Change the node color to white
+             // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
+            intersectedNode.material.color.set(0xffffff);
+
         } else {
+          if (hoveredNodeId !== null && originalNodeColorsRef.current[hoveredNodeId]) {
+                const node = nodesRef.current.find(node => node.userData.id === hoveredNodeId);
+                if (node) {
+                     // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
+                    node.material.color.copy(originalNodeColorsRef.current[hoveredNodeId]);
+                }
+            }
+
             setHoveredNodeId(null);
         }
     };
@@ -272,6 +292,7 @@ const NeuralNetworkAnimation = () => {
 
     nodesRef.current = [];
     connectionsRef.current = [];
+    originalNodeColorsRef.current = {};
   };
 
   const frequencyToColor = (frequency: number): THREE.Color => {
@@ -419,4 +440,5 @@ const NeuralNetworkAnimation = () => {
 };
 
 export default NeuralNetworkAnimation;
+
 
