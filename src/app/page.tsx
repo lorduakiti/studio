@@ -31,11 +31,12 @@ const NeuralNetworkAnimation = () => {
     return `hsl(${hue}, 100%, 50%)`;
   }, []);
 
-  const updateCameraPosition = useCallback((newZoomLevel: number) => {
+  const updateCameraPosition = useCallback((zoom) => {
     if (cameraRef.current) {
       const maxZoom = 10;
-      const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
+      const zoomFactor = 1 + (zoom / 100) * (maxZoom - 1);
       cameraRef.current.position.z = maxZoom / zoomFactor;
+      cameraRef.current.updateProjectionMatrix();
     }
   }, []);
 
@@ -67,13 +68,12 @@ const NeuralNetworkAnimation = () => {
   }, []);
 
   const initializeNetwork = useCallback(() => {
-    let scene: THREE.Scene, camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer;
-
     clearScene();
 
     const width = window.innerWidth;
     const height = window.innerHeight;
 
+    let camera: THREE.PerspectiveCamera;
     if (!cameraRef.current) {
       camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
       cameraRef.current = camera;
@@ -83,9 +83,7 @@ const NeuralNetworkAnimation = () => {
       camera.updateProjectionMatrix();
     }
 
-    scene = sceneRef.current;
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.style.position = 'absolute';
@@ -96,12 +94,17 @@ const NeuralNetworkAnimation = () => {
       canvasContainer.appendChild(renderer.domElement);
     }
 
+    const scene = sceneRef.current;
     const geometry = new THREE.SphereGeometry(0.1, 32, 32);
     const nodesArray: THREE.Mesh[] = [];
     let nextNodeId = 0;
 
     for (let i = 0; i < nodes; i++) {
-      const material = new THREE.MeshBasicMaterial({ color: 0x888888 });
+      const connectionCount = connectionsArrayRef.current.filter(conn => {
+        return conn.geometry.attributes.position.array.includes(i);
+      }).length;
+
+      const material = new THREE.MeshBasicMaterial({ color: getConnectionColor(connectionCount) });
       const node = new THREE.Mesh(geometry, material);
       node.position.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
       (node as any).userData = { id: nextNodeId++ };
@@ -134,7 +137,7 @@ const NeuralNetworkAnimation = () => {
     orbitControls.enableDamping = true;
     orbitControls.dampingFactor = 0.05;
 
-    camera.position.z = 5;
+    updateCameraPosition(zoomLevel);
 
     rendererRef.current = renderer;
     sceneRef.current = scene;
@@ -223,13 +226,12 @@ const NeuralNetworkAnimation = () => {
     };
 
     animate();
-    updateCameraPosition(zoomLevel);
 
     return () => {
       window.removeEventListener('mousemove', onMouseMove, false);
       window.removeEventListener('click', onNodeClick, false);
       cancelAnimationFrame(animationFrameIdRef.current);
-      rendererRef.current?.dispose();
+      renderer.dispose();
 
       clearScene();
     };
@@ -266,7 +268,7 @@ const NeuralNetworkAnimation = () => {
         </div>
 
         <div style={{ position: 'absolute', top: '20px', right: '20px', width: '300px', color: '#fff' }}>
-          <Card style={{ backgroundColor: '#1e1e1e', color: '#fff' }}>
+          <Card style={{ backgroundColor: '#1e1e1e', color: 'white' }}>
             <CardHeader style={{ color: 'white' }}>
               <CardTitle style={{ color: 'white' }}>Animation Controls</CardTitle>
               <CardDescription style={{ color: 'white' }}>Control the animation playback.</CardDescription>
@@ -302,9 +304,7 @@ const NeuralNetworkAnimation = () => {
                   max={100}
                   step={1}
                   onValueChange={(value) => {
-                    const newZoomLevel = value[0];
-                    updateCameraPosition(newZoomLevel);
-                    setZoomLevel(newZoomLevel);
+                    setZoomLevel(value[0]);
                   }}
                 />
               </div>
