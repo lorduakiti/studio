@@ -8,6 +8,7 @@ import { Icons } from '@/components/icons';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const gradientColors = [
   0x0000FF, // Blue
@@ -23,6 +24,8 @@ const NeuralNetworkAnimation = () => {
   const [rotationSpeed, setRotationSpeed] = useState(1.0); // Initial rotation speed
   const [numNodes, setNumNodes] = useState(50);
   const [numConnections, setNumConnections] = useState(100);
+  const [autoCreateNodes, setAutoCreateNodes] = useState(false);
+  const [creationRate, setCreationRate] = useState(1); // Nodes per second
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -101,6 +104,30 @@ const NeuralNetworkAnimation = () => {
       initializeNetwork(numNodes, numConnections);
     }
   }, [numNodes, numConnections]);
+
+  useEffect(() => {
+    if (autoCreateNodes) {
+      const intervalId = setInterval(() => {
+        if (sceneRef.current) {
+          createNode();
+          setNumNodes(prevCount => prevCount + 1);
+        }
+      }, 1000 / creationRate);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [autoCreateNodes, creationRate]);
+
+  const createNode = () => {
+    if (!sceneRef.current) return;
+
+    const geometry = new THREE.SphereGeometry(0.05, 32, 32);
+    const material = new THREE.MeshBasicMaterial({ color: 0x7DF9FF });
+    const node = new THREE.Mesh(geometry, material);
+    node.position.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
+    sceneRef.current.add(node);
+    nodesRef.current.push(node);
+  };
 
   const initializeNetwork = (nodes: number, connections: number) => {
     if (!sceneRef.current) return;
@@ -202,6 +229,26 @@ const NeuralNetworkAnimation = () => {
                 className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-20 text-black"
               />
             </div>
+             <div className="flex items-center space-x-2">
+              <Checkbox
+                id="autoCreateNodes"
+                checked={autoCreateNodes}
+                onCheckedChange={(checked) => setAutoCreateNodes(checked)}
+              />
+              <label htmlFor="autoCreateNodes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Auto Create Nodes</label>
+            </div>
+            {autoCreateNodes && (
+              <div className="flex items-center space-x-2">
+                <label htmlFor="creationRate" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Creation Rate (nodes/sec)</label>
+                <Input
+                  type="number"
+                  id="creationRate"
+                  value={creationRate}
+                  onChange={(e) => setCreationRate(parseInt(e.target.value))}
+                  className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-20 text-black"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
         <Card className="w-full max-w-sm bg-[#242424] border-none shadow-md">
