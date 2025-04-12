@@ -26,6 +26,8 @@ const NeuralNetworkAnimation = () => {
   const [numConnections, setNumConnections] = useState(100);
   const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [creationRate, setCreationRate] = useState(1); // Nodes per second
+  const [zoomLevel, setZoomLevel] = useState(5); // Initial zoom level
+  const ZOOM_SPEED = 0.01; // Zoom speed
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -42,7 +44,7 @@ const NeuralNetworkAnimation = () => {
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-    camera.position.z = 5;
+    camera.position.z = zoomLevel;
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -87,15 +89,32 @@ const NeuralNetworkAnimation = () => {
       renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     };
 
+      const handleZoom = (event: WheelEvent) => {
+      // Adjust zoom level based on mouse wheel delta
+      let zoomDelta = event.deltaY * ZOOM_SPEED;
+      let newZoomLevel = zoomLevel + zoomDelta;
+
+      // Clamp zoom level to prevent zooming in too close or too far out
+      newZoomLevel = Math.max(1, Math.min(10, newZoomLevel)); // Adjust min and max values as needed
+
+      setZoomLevel(newZoomLevel);
+      camera.position.z = newZoomLevel; // Update camera position
+
+      // Prevent default scroll behavior
+      event.preventDefault();
+      };
+
+    canvas.addEventListener('wheel', handleZoom);
     window.addEventListener('resize', handleResize);
 
     return () => {
       cancelAnimationFrame(animationFrameId.current);
       window.removeEventListener('resize', handleResize);
+      canvas.removeEventListener('wheel', handleZoom);
       controls.dispose();
       renderer.dispose();
     };
-  }, [animationSpeed, isPlaying, numConnections, numNodes, rotationSpeed]);
+  }, [animationSpeed, isPlaying, numConnections, numNodes, rotationSpeed, zoomLevel]);
 
   useEffect(() => {
     if (sceneRef.current) {
