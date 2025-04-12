@@ -69,10 +69,24 @@ const NeuralNetworkAnimation = () => {
 
       // Simulate node activation (example)
       nodesRef.current.forEach((node, index) => {
-        const activation = Math.sin(Date.now() * 0.001 * animationSpeed + index);
+        // Check if the node has connections
+        const hasConnections = connectionsRef.current.some(connection =>
+          connection.geometry.attributes.position.array[0] === node.position.x &&
+          connection.geometry.attributes.position.array[1] === node.position.y &&
+          connection.geometry.attributes.position.array[2] === node.position.z
+        );
+
+        let color;
+        if (hasConnections) {
+          const activation = Math.sin(Date.now() * 0.001 * animationSpeed + index);
+          color = getColorForActivation(activation);
+        } else {
+          color = new THREE.Color(0xAAAAAA); // Gray color
+        }
+
         // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
         if (node.material instanceof THREE.MeshBasicMaterial) {
-          node.material.color.set(getColorForActivation(activation));
+          node.material.color.set(color);
         }
       });
 
@@ -341,4 +355,3 @@ const NeuralNetworkAnimation = () => {
 };
 
 export default NeuralNetworkAnimation;
-
