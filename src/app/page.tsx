@@ -42,9 +42,41 @@ const NeuralNetworkAnimation = () => {
     }
   }, []);
 
+  const clearScene = useCallback(() => {
+    if (sceneRef.current) {
+      // Dispose of resources
+      sceneRef.current.children.forEach((child) => {
+        if ((child as THREE.Mesh).geometry) {
+          ((child as THREE.Mesh).geometry as THREE.BufferGeometry).dispose();
+        }
+        if ((child as THREE.Line).geometry) {
+          ((child as THREE.Line).geometry as THREE.BufferGeometry).dispose();
+        }
+        if ((child as THREE.Mesh).material) {
+          if (Array.isArray(((child as THREE.Mesh).material as THREE.Material))) {
+            ((child as THREE.Mesh).material as THREE.Material[]).forEach(material => material.dispose());
+          } else {
+            (((child as THREE.Mesh).material as THREE.Material)).dispose();
+          }
+        }
+        if ((child as THREE.Line).material) {
+          (((child as THREE.Line).material as THREE.Material)).dispose();
+        }
+        sceneRef.current.remove(child);
+      });
+
+      // Optional: Dispose of the scene itself, if necessary
+      // sceneRef.current.dispose(); // Ensure scene is not accessed after disposal
+    }
+    nodesArrayRef.current = [];
+    connectionsArrayRef.current = [];
+  }, []);
+
   // Initialize network
   const initializeNetwork = useCallback(() => {
     let scene: THREE.Scene, camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer;
+
+    clearScene();
 
     if (!cameraRef.current) {
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -166,12 +198,18 @@ const NeuralNetworkAnimation = () => {
           if ((child as THREE.Mesh).geometry) {
             ((child as THREE.Mesh).geometry as THREE.BufferGeometry).dispose();
           }
+          if ((child as THREE.Line).geometry) {
+            ((child as THREE.Line).geometry as THREE.BufferGeometry).dispose();
+          }
           if ((child as THREE.Mesh).material) {
             if (Array.isArray(((child as THREE.Mesh).material as THREE.Material))) {
                 ((child as THREE.Mesh).material as THREE.Material[]).forEach(material => material.dispose());
             } else {
                 (((child as THREE.Mesh).material as THREE.Material)).dispose();
             }
+          }
+          if ((child as THREE.Line).material) {
+            (((child as THREE.Line).material as THREE.Material)).dispose();
           }
         });
         if (sceneRef.current.dispose) {
@@ -185,7 +223,7 @@ const NeuralNetworkAnimation = () => {
       connectionsArray.forEach(line => (line.material as THREE.Material).dispose());
       document.getElementById('canvas-container')?.removeChild(renderer.domElement);
     };
-  }, [nodes, connections, activationSpeed, rotationSpeed, zoomLevel, getConnectionColor, updateCameraPosition]);
+  }, [nodes, connections, activationSpeed, rotationSpeed, zoomLevel, getConnectionColor, updateCameraPosition, clearScene]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -330,4 +368,3 @@ export default function Page() {
     </>
   );
 }
-
