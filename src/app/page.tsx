@@ -23,7 +23,7 @@ const NeuralNetworkAnimation = () => {
   const [animationSpeed, setAnimationSpeed] = useState(1);
   const [rotationSpeed, setRotationSpeed] = useState(1.0); // Initial rotation speed
   const [numNodes, setNumNodes] = useState(42);
-  const [numConnections, setNumConnections] = useState(100);
+  const [numConnections, setNumConnections] = useState(0);
   const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [creationRate, setCreationRate] = useState(1); // Nodes per second
   const [zoomLevel, setZoomLevel] = useState(0); // Initial zoom level
@@ -341,3 +341,4 @@ const NeuralNetworkAnimation = () => {
 };
 
 export default NeuralNetworkAnimation;
+
