@@ -31,7 +31,7 @@ const NeuralNetworkAnimation = () => {
   const [numConnections, setNumConnections] = useState(0);
   const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [creationRate, setCreationRate] = useState(1); // Nodes per second
-  const [zoomLevel, setZoomLevel] = useState(100); // Initial zoom level
+  const [zoomLevel, setZoomLevel] = useState(0); // Initial zoom level
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -87,6 +87,8 @@ const NeuralNetworkAnimation = () => {
           const endY = positions[4];
           const endZ = positions[5];
 
+          const nodeId = node.userData.id;
+
           if (
             (startX === nodePosition.x && startY === nodePosition.y && startZ === nodePosition.z) ||
             (endX === nodePosition.x && endY === nodePosition.y && endZ === nodePosition.z)
@@ -97,11 +99,15 @@ const NeuralNetworkAnimation = () => {
         }, 0);
 
 
-        // Normalize the number of connections to a value between 0 and 1
-        const maxConnections = 100; // Define a maximum number of connections for normalization
-        const normalizedConnections = Math.min(numberOfConnections, maxConnections) / maxConnections;
+        const normalizedConnections = Math.min(numberOfConnections, 100) / 100;
 
-        const color = getColorForNumberOfConnections(normalizedConnections);
+        // If the node has no connections, make it gray.
+        let color;
+        if (numberOfConnections === 0) {
+          color = new THREE.Color(0x808080); // Gray color
+        } else {
+          color = getColorForNumberOfConnections(normalizedConnections);
+        }
 
         // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
         if (node.material instanceof THREE.MeshBasicMaterial) {
@@ -177,8 +183,7 @@ const NeuralNetworkAnimation = () => {
     const material = new THREE.MeshBasicMaterial({ color: 0x7DF9FF });
     const node = new THREE.Mesh(geometry, material);
     node.position.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
-    // @ts-expect-error
-    node.id = nextNodeId++; // Assign a unique ID to the node
+    node.userData.id = nextNodeId++;
     sceneRef.current.add(node);
     nodesRef.current.push(node);
   };
@@ -194,8 +199,7 @@ const NeuralNetworkAnimation = () => {
       const material = new THREE.MeshBasicMaterial({ color: 0x7DF9FF });
       const node = new THREE.Mesh(geometry, material);
       node.position.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
-      // @ts-expect-error
-      node.id = nextNodeId++; // Assign a unique ID to the node
+      node.userData.id = nextNodeId++;
       sceneRef.current.add(node);
       nodesArray.push(node);
     }
@@ -244,34 +248,28 @@ const NeuralNetworkAnimation = () => {
     connectionsRef.current = [];
   };
 
-  const getColorForActivation = (activation: number): THREE.Color => {
-    const scaledActivation = (activation + 1) / 2; // Scale from -1 to 1, to 0 to 1
-    const colorIndex = Math.floor(scaledActivation * (gradientColors.length - 1));
-    const startColor = new THREE.Color(gradientColors[colorIndex]);
-    const endColor = new THREE.Color(gradientColors[colorIndex + 1] || gradientColors[colorIndex]);
-    const colorWeight = scaledActivation * (gradientColors.length - 1) - colorIndex;
-    const finalColor = startColor.lerp(endColor, colorWeight);
-    return finalColor;
+  const frequencyToColor = (frequency: number): THREE.Color => {
+    const red = Math.sin(0.3 * frequency + 0) * 127 + 128;
+    const green = Math.sin(0.3 * frequency + 2) * 127 + 128;
+    const blue = Math.sin(0.3 * frequency + 4) * 127 + 128;
+
+    return new THREE.Color(red / 255, green / 255, blue / 255);
+  };
+
+  const getColorForNumberOfConnections = (normalizedConnections: number): THREE.Color => {
+      // Map the normalized connections to the frequency range
+      const minFrequency = 400; // Violet
+      const maxFrequency = 790; // Red
+      const frequency = minFrequency + (normalizedConnections * (maxFrequency - minFrequency));
+      return frequencyToColor(frequency);
   };
 
   const updateCameraPosition = (newZoomLevel: number) => {
     if (cameraRef.current) {
-      const zoomPercentage = newZoomLevel / 100;
-      const minZoom = 1; // Minimum zoom distance
-      const maxZoom = 10; // Maximum zoom distance
-      const zoomDistance = minZoom + (maxZoom - minZoom) * (1 - zoomPercentage);
-
-      cameraRef.current.position.z = zoomDistance;
+      const maxZoom = 10; // Define the maximum zoom level (10x)
+      const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
+      cameraRef.current.position.z = maxZoom / zoomFactor;
     }
-  };
-
-  const getColorForNumberOfConnections = (normalizedConnections: number): THREE.Color => {
-    const colorIndex = Math.floor(normalizedConnections * (gradientColors.length - 1));
-    const startColor = new THREE.Color(gradientColors[colorIndex]);
-    const endColor = new THREE.Color(gradientColors[colorIndex + 1] || gradientColors[colorIndex]);
-    const colorWeight = normalizedConnections * (gradientColors.length - 1) - colorIndex;
-    const finalColor = startColor.lerp(endColor, colorWeight);
-    return finalColor;
   };
 
 
