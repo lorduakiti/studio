@@ -35,9 +35,9 @@ const NeuralNetworkAnimation = () => {
   // Update camera position based on zoom level
   const updateCameraPosition = useCallback((newZoomLevel: number) => {
     if (cameraRef.current) {
-      const maxZoom = 10; // Define the maximum zoom level
-      const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
-      cameraRef.current.position.z = maxZoom / zoomFactor;
+      const maxZoom = 9; // Define the maximum zoom level (9x zoom)
+      const zoomFactor = 1 + (newZoomLevel / 100) * maxZoom;
+      cameraRef.current.position.z = (maxZoom + 1) / zoomFactor;
     }
   }, []);
 
