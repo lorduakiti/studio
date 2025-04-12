@@ -159,7 +159,9 @@ const NeuralNetworkAnimation = () => {
       window.removeEventListener('mousemove', onMouseMove, false);
       cancelAnimationFrame(animationFrameIdRef.current);
       renderer.dispose();
-      sceneRef.current.dispose();
+      if (sceneRef.current) {
+        sceneRef.current.dispose();
+      }
       geometry.dispose();
       lineMaterial.dispose();
       nodesArray.forEach(node => (node.material as THREE.Material).dispose());
@@ -311,3 +313,4 @@ export default function Page() {
     </>
   );
 }
+
