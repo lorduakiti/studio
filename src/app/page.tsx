@@ -101,7 +101,7 @@ const NeuralNetworkAnimation = () => {
             count_actual = count_actual + 1;
           }
           // return count;
-          console.log(nodeId, count_actual);
+          // console.log(nodeId, count_actual);
           return count_actual;
         }, 0);
 
@@ -123,7 +123,7 @@ const NeuralNetworkAnimation = () => {
       });
 
       renderer.render(scene, camera);
-      animationFrameId.current = requestAnimationFrame(animate);
+      // animationFrameId.current = requestAnimationFrame(animate);
     };
 
     animationFrameId.current = requestAnimationFrame(animate);
