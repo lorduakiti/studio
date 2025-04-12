@@ -35,9 +35,9 @@ const NeuralNetworkAnimation = () => {
 
   // Update camera position based on zoom level
   const updateCameraPosition = useCallback((newZoomLevel: number) => {
-    const maxZoom = 10;
-    const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
     if (cameraRef.current) {
+      const maxZoom = 10; // Define the maximum zoom level
+      const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
       cameraRef.current.position.z = maxZoom / zoomFactor;
     }
   }, []);
@@ -159,7 +159,7 @@ const NeuralNetworkAnimation = () => {
       window.removeEventListener('mousemove', onMouseMove, false);
       cancelAnimationFrame(animationFrameIdRef.current);
       renderer.dispose();
-      scene.dispose();
+      sceneRef.current.dispose();
       geometry.dispose();
       lineMaterial.dispose();
       nodesArray.forEach(node => (node.material as THREE.Material).dispose());
