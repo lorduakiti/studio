@@ -78,6 +78,8 @@ const NeuralNetworkAnimation = () => {
 
       // Simulate node activation (example)
       nodesRef.current.forEach((node, index) => {
+        let nodeId = node.userData.id;
+
         // Determine the number of connections for this node
         const numberOfConnections = connectionsRef.current.reduce((count, connection) => {
           const positions = connection.geometry.attributes.position.array;
@@ -91,7 +93,7 @@ const NeuralNetworkAnimation = () => {
           const endY = positions[4];
           const endZ = positions[5];
 
-          const nodeId = node.userData.id;
+          // let nodeId = node.userData.id;
           let count_actual = count;
           if (
             (startX === nodePosition.x && startY === nodePosition.y && startZ === nodePosition.z) ||
@@ -106,23 +108,24 @@ const NeuralNetworkAnimation = () => {
         }, 0);
 
 
-        // const normalizedConnections = Math.min(numberOfConnections, 100) / 100;
+        const normalizedConnections = Math.min(numberOfConnections, 100) / 100;
 
-        // // If the node has no connections, make it gray.
-        // let color;
-        // // if (numberOfConnections === 0) {
-        // //   color = new THREE.Color(0x808080); // Gray color
-        // // } else {
-        //   color = getColorForNumberOfConnections(normalizedConnections);
-        // // }
+        // If the node has no connections, make it gray.
+        let color;
+        if (numberOfConnections === 0) {
+          color = new THREE.Color(0x808080); // Gray color
+        } else {
+          color = getColorForNumberOfConnections(normalizedConnections);
+        }
 
-        // // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
-        // // if (node.material instanceof THREE.MeshBasicMaterial) {
-        //   node.material.color.set(color);
-        // // }
+        // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
+        if (node.material instanceof THREE.MeshBasicMaterial) {
+          node.material.color.set(color);
+          console.log(nodeId, color);
+        }
       });
 
-      // renderer.render(scene, camera);
+      renderer.render(scene, camera);
       animationFrameId.current = requestAnimationFrame(animate);
     };
 
