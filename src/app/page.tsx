@@ -296,7 +296,7 @@ const NeuralNetworkAnimation = () => {
                 {isPlaying ? 'Pause' : 'Play'}
               </Button>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col items-start space-y-1">
               <label htmlFor="animationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Activation Speed</label>
               <Slider
                 id="animationSpeed"
@@ -307,7 +307,7 @@ const NeuralNetworkAnimation = () => {
                 onValueChange={(value) => setAnimationSpeed(value[0])}
               />
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col items-start space-y-1">
               <label htmlFor="rotationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Rotation Speed</label>
               <Slider
                 id="rotationSpeed"
@@ -318,7 +318,7 @@ const NeuralNetworkAnimation = () => {
                 onValueChange={(value) => setRotationSpeed(value[0])}
               />
             </div>
-             <div className="flex items-center space-x-2">
+             <div className="flex flex-col items-start space-y-1">
               <label htmlFor="zoomLevel" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Zoom</label>
               <Slider
                 id="zoomLevel"
