@@ -44,7 +44,7 @@ const NeuralNetworkAnimation = () => {
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-    camera.position.z = zoomLevel;
+    updateCameraPosition(zoomLevel);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -98,7 +98,7 @@ const NeuralNetworkAnimation = () => {
       newZoomLevel = Math.max(1, Math.min(10, newZoomLevel)); // Adjust min and max values as needed
 
       setZoomLevel(newZoomLevel);
-      camera.position.z = newZoomLevel; // Update camera position
+      updateCameraPosition(newZoomLevel);
 
       // Prevent default scroll behavior
       event.preventDefault();
@@ -217,6 +217,14 @@ const NeuralNetworkAnimation = () => {
     return finalColor;
   };
 
+  const updateCameraPosition = (newZoomLevel: number) => {
+      if (cameraRef.current) {
+          // Calculate the new Z position based on the zoom level
+          cameraRef.current.position.z = 11 - newZoomLevel;
+      }
+  };
+
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#121212] text-white">
       <h1 className="text-3xl font-bold mb-4">Synaptic Canvas</h1>
@@ -302,6 +310,17 @@ const NeuralNetworkAnimation = () => {
                 min={0.1}
                 step={0.1}
                 onValueChange={(value) => setRotationSpeed(value[0])}
+              />
+            </div>
+             <div className="flex items-center space-x-2">
+              <label htmlFor="zoomLevel" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Zoom</label>
+              <Slider
+                id="zoomLevel"
+                defaultValue={[zoomLevel]}
+                max={10}
+                min={1}
+                step={1}
+                onValueChange={(value) => setZoomLevel(value[0])}
               />
             </div>
           </CardContent>
