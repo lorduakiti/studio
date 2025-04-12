@@ -114,9 +114,9 @@ const NeuralNetworkAnimation = () => {
         // }
 
         // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
-        if (node.material instanceof THREE.MeshBasicMaterial) {
+        // if (node.material instanceof THREE.MeshBasicMaterial) {
           node.material.color.set(color);
-        }
+        // }
       });
 
       renderer.render(scene, camera);
