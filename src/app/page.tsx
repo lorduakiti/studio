@@ -92,31 +92,34 @@ const NeuralNetworkAnimation = () => {
           const endZ = positions[5];
 
           const nodeId = node.userData.id;
-
+          let count_actual = count;
           if (
             (startX === nodePosition.x && startY === nodePosition.y && startZ === nodePosition.z) ||
             (endX === nodePosition.x && endY === nodePosition.y && endZ === nodePosition.z)
           ) {
-            return count + 1;
+            // return count + 1;
+            count_actual = count_actual + 1;
           }
-          return count;
+          // return count;
+          console.log(nodeId, count_actual);
+          return count_actual;
         }, 0);
 
 
-        const normalizedConnections = Math.min(numberOfConnections, 100) / 100;
+        // const normalizedConnections = Math.min(numberOfConnections, 100) / 100;
 
-        // If the node has no connections, make it gray.
-        let color;
-        // if (numberOfConnections === 0) {
-        //   color = new THREE.Color(0x808080); // Gray color
-        // } else {
-          color = getColorForNumberOfConnections(normalizedConnections);
-        // }
+        // // If the node has no connections, make it gray.
+        // let color;
+        // // if (numberOfConnections === 0) {
+        // //   color = new THREE.Color(0x808080); // Gray color
+        // // } else {
+        //   color = getColorForNumberOfConnections(normalizedConnections);
+        // // }
 
-        // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
-        // if (node.material instanceof THREE.MeshBasicMaterial) {
-          node.material.color.set(color);
-        // }
+        // // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
+        // // if (node.material instanceof THREE.MeshBasicMaterial) {
+        //   node.material.color.set(color);
+        // // }
       });
 
       renderer.render(scene, camera);
