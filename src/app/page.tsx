@@ -17,25 +17,23 @@ const NeuralNetworkAnimation = () => {
   const connectionsArrayRef = useRef<THREE.Line[]>([]);
   const [nodes, setNodes] = useState(42);
   const [connections, setConnections] = useState(0);
-  const [activationSpeed, setActivationSpeed] = useState(50); // Initial activation speed
-  const [rotationSpeed, setRotationSpeed] = useState(50); // Initial rotation speed
-  const [zoomLevel, setZoomLevel] = useState(0); // Initial zoom level
-  const [autoCreateNodes, setAutoCreateNodes] = useState(false); // Control for automatic node creation
+  const [activationSpeed, setActivationSpeed] = useState(50);
+  const [rotationSpeed, setRotationSpeed] = useState(50);
+  const [zoomLevel, setZoomLevel] = useState(0);
+  const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [elementNodeId, setElementNodeId] = useState<number | null>(null);
   const [clickedNodes, setClickedNodes] = useState<Set<number>>(new Set());
 
-  // Color scale for node connections, from violet to red
   const getConnectionColor = useCallback((connectionCount: number) => {
     const maxConnections = 100;
     const clampedConnections = Math.min(connectionCount, maxConnections);
-    const hue = 240 - (clampedConnections / maxConnections) * 240; // Violet is 240, Red is 0
-    return `hsl(${hue}, 100%, 50%)`; // Return HSL color
+    const hue = 240 - (clampedConnections / maxConnections) * 240;
+    return `hsl(${hue}, 100%, 50%)`;
   }, []);
 
-  // Update camera position based on zoom level
   const updateCameraPosition = useCallback((newZoomLevel: number) => {
     if (cameraRef.current) {
-      const maxZoom = 10; // Define the maximum zoom level
+      const maxZoom = 10;
       const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
       cameraRef.current.position.z = maxZoom / zoomFactor;
     }
@@ -43,7 +41,6 @@ const NeuralNetworkAnimation = () => {
 
   const clearScene = useCallback(() => {
     if (sceneRef.current) {
-      // Dispose of resources
       sceneRef.current.children.forEach((child) => {
         if ((child as THREE.Mesh)?.geometry) {
           ((child as THREE.Mesh).geometry as THREE.BufferGeometry).dispose();
@@ -69,39 +66,45 @@ const NeuralNetworkAnimation = () => {
     setClickedNodes(new Set());
   }, []);
 
-  // Initialize network
   const initializeNetwork = useCallback(() => {
     let scene: THREE.Scene, camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer;
 
     clearScene();
 
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
     if (!cameraRef.current) {
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
       cameraRef.current = camera;
     } else {
       camera = cameraRef.current;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
     }
 
     scene = sceneRef.current;
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x000000, 0); // Set the background to transparent
+    renderer.setSize(width, height);
+    renderer.setClearColor(0x000000, 0);
     renderer.domElement.style.position = 'absolute';
     renderer.domElement.style.top = '0';
     renderer.domElement.style.left = '0';
-    document.getElementById('canvas-container')?.appendChild(renderer.domElement);
+    const canvasContainer = document.getElementById('canvas-container');
+    if (canvasContainer) {
+      canvasContainer.appendChild(renderer.domElement);
+    }
 
     const geometry = new THREE.SphereGeometry(0.1, 32, 32);
     const nodesArray: THREE.Mesh[] = [];
     let nextNodeId = 0;
 
     for (let i = 0; i < nodes; i++) {
-      const material = new THREE.MeshBasicMaterial({ color: 0x888888 }); // Default color gray
+      const material = new THREE.MeshBasicMaterial({ color: 0x888888 });
       const node = new THREE.Mesh(geometry, material);
       node.position.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
-      // @ts-expect-error
-      node.userData = { id: nextNodeId++ }; // Assign a unique ID to the node
+      (node as any).userData = { id: nextNodeId++ };
       scene.add(node);
       nodesArray.push(node);
     }
@@ -140,7 +143,6 @@ const NeuralNetworkAnimation = () => {
     nodesArrayRef.current = nodesArray;
     connectionsArrayRef.current = connectionsArray;
 
-    // Raycaster and mouse setup for hover interaction
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
@@ -153,25 +155,21 @@ const NeuralNetworkAnimation = () => {
 
       if (intersects.length > 0) {
         const intersectedNode = intersects[0].object as THREE.Mesh;
-        // @ts-expect-error
-        setElementNodeId(intersectedNode.userData.id);
+        const nodeId = (intersectedNode as any).userData.id;
+        setElementNodeId(nodeId);
 
-        // Check if the node is already clicked, if not, highlight it
-        // @ts-expect-error
-        if (!clickedNodes.has(intersectedNode.userData.id)) {
+        if (!clickedNodes.has(nodeId)) {
           intersectedNode.material = new THREE.MeshBasicMaterial({ color: '#FFFFFF' });
         }
       } else {
         nodesArrayRef.current.forEach(node => {
-          // @ts-expect-error
-          const nodeId = node.userData.id;
+          const nodeId = (node as any).userData.id;
           if (!clickedNodes.has(nodeId)) {
-            // @ts-expect-error
-            const connectionCount = connectionsArrayRef.current.filter(conn => conn.geometry.attributes.position.array.includes(node.position.x)).length;
-            // @ts-expect-error
+            const connectionCount = connectionsArrayRef.current.filter(conn => {
+              const positions = conn.geometry.attributes.position.array;
+              return positions && positions.includes(node.position.x);
+            }).length;
             (node.material as THREE.MeshBasicMaterial).color.set(getConnectionColor(connectionCount));
-          } else {
-            node.material = new THREE.MeshBasicMaterial({ color: '#FFFFFF' });
           }
         });
         setElementNodeId(null);
@@ -188,20 +186,20 @@ const NeuralNetworkAnimation = () => {
 
       if (intersects.length > 0) {
         const intersectedNode = intersects[0].object as THREE.Mesh;
-        // @ts-expect-error
-        const nodeId = intersectedNode.userData.id;
+        const nodeId = (intersectedNode as any).userData.id;
 
         setClickedNodes(prevClickedNodes => {
           const newClickedNodes = new Set(prevClickedNodes);
           if (newClickedNodes.has(nodeId)) {
-            newClickedNodes.delete(nodeId); // Unclick if already clicked
-            // @ts-expect-error
-            const connectionCount = connectionsArrayRef.current.filter(conn => conn.geometry.attributes.position.array.includes(intersectedNode.position.x)).length;
-            // @ts-expect-error
-            intersectedNode.material = new THREE.MeshBasicMaterial({color: getConnectionColor(connectionCount)});
+            newClickedNodes.delete(nodeId);
+            const connectionCount = connectionsArrayRef.current.filter(conn => {
+              const positions = conn.geometry.attributes.position.array;
+              return positions && positions.includes(intersectedNode.position.x);
+            }).length;
+            intersectedNode.material = new THREE.MeshBasicMaterial({ color: getConnectionColor(connectionCount) });
           } else {
-            newClickedNodes.add(nodeId); // Click if not clicked
-            intersectedNode.material = new THREE.MeshBasicMaterial({ color: '#FFFFFF' }); // Highlight
+            newClickedNodes.add(nodeId);
+            intersectedNode.material = new THREE.MeshBasicMaterial({ color: '#FFFFFF' });
           }
           return newClickedNodes;
         });
@@ -214,10 +212,11 @@ const NeuralNetworkAnimation = () => {
     const animate = () => {
       animationFrameIdRef.current = requestAnimationFrame(animate);
 
-      // Adjust rotation speed based on slider value
-      const rotationSpeedFactor = (rotationSpeed / 100) * 0.05; // Adjust multiplier to control speed
-      sceneRef.current.rotation.x += rotationSpeedFactor;
-      sceneRef.current.rotation.y += rotationSpeedFactor;
+      const rotationSpeedFactor = (rotationSpeed / 100) * 0.05;
+      if (sceneRef.current) {
+        sceneRef.current.rotation.x += rotationSpeedFactor;
+        sceneRef.current.rotation.y += rotationSpeedFactor;
+      }
 
       orbitControlsRef.current?.update();
       rendererRef.current?.render(sceneRef.current, cameraRef.current);
@@ -231,35 +230,8 @@ const NeuralNetworkAnimation = () => {
       window.removeEventListener('click', onNodeClick, false);
       cancelAnimationFrame(animationFrameIdRef.current);
       rendererRef.current?.dispose();
-      if (sceneRef.current) {
-        sceneRef.current.children.forEach(child => {
-          if ((child as THREE.Mesh)?.geometry) {
-            ((child as THREE.Mesh).geometry as THREE.BufferGeometry).dispose();
-          }
-          if ((child as THREE.Line)?.geometry) {
-            ((child as THREE.Line).geometry as THREE.BufferGeometry).dispose();
-          }
-          if ((child as THREE.Mesh)?.material) {
-            if (Array.isArray(((child as THREE.Mesh).material as THREE.Material))) {
-                ((child as THREE.Mesh).material as THREE.Material[]).forEach(material => material.dispose());
-            } else {
-                (((child as THREE.Mesh).material as THREE.Material)).dispose();
-            }
-          }
-          if ((child as THREE.Line)?.material) {
-            (((child as THREE.Line).material as THREE.Material)).dispose();
-          }
-        });
-      }
 
-      geometry.dispose();
-      lineMaterial.dispose();
-      nodesArray.forEach(node => (node.material as THREE.Material).dispose());
-      connectionsArray.forEach(line => (line.material as THREE.Material).dispose());
-      const canvasContainer = document.getElementById('canvas-container');
-      if (canvasContainer && rendererRef.current && rendererRef.current.domElement.parentNode === canvasContainer) {
-        canvasContainer.removeChild(rendererRef.current.domElement);
-      }
+      clearScene();
     };
   }, [nodes, connections, activationSpeed, rotationSpeed, zoomLevel, getConnectionColor, updateCameraPosition, clearScene, clickedNodes]);
 
@@ -272,7 +244,6 @@ const NeuralNetworkAnimation = () => {
     }
   }, [initializeNetwork, updateCameraPosition, zoomLevel]);
 
-  // Automatic node creation logic
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
 
@@ -302,7 +273,7 @@ const NeuralNetworkAnimation = () => {
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="flex items-center space-x-2">
-                <Label htmlFor="activationSpeed" style={{ color: 'gray' }}>Activation Speed: <span style={{ color: 'gray' }}>{activationSpeed}</span></Label>
+                <Label htmlFor="activationSpeed" style={{ color: 'white' }}>Activation Speed: <span style={{ color: 'gray' }}>{activationSpeed}</span></Label>
                 <Slider
                   id="activationSpeed"
                   defaultValue={[activationSpeed]}
@@ -394,4 +365,3 @@ export default function Page() {
     </>
   );
 }
-
