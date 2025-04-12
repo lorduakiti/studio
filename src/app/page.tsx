@@ -238,8 +238,8 @@ const NeuralNetworkAnimation = () => {
       <div className="flex flex-col md:flex-row items-center justify-center mt-4 gap-4">
          <Card className="w-full max-w-sm bg-[#242424] border-none shadow-md">
           <CardHeader>
-            <CardTitle>Network Configuration</CardTitle>
-            <CardDescription>Adjust the network structure.</CardDescription>
+            <CardTitle className="text-white">Network Configuration</CardTitle>
+            <CardDescription className="text-white">Adjust the network structure.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="flex items-center space-x-2">
@@ -286,8 +286,8 @@ const NeuralNetworkAnimation = () => {
         </Card>
         <Card className="w-full max-w-sm bg-[#242424] border-none shadow-md">
           <CardHeader>
-            <CardTitle>Animation Controls</CardTitle>
-            <CardDescription>Control the animation playback.</CardDescription>
+            <CardTitle className="text-white">Animation Controls</CardTitle>
+            <CardDescription className="text-white">Control the animation playback.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="flex items-center space-x-2">
@@ -337,5 +337,3 @@ const NeuralNetworkAnimation = () => {
 };
 
 export default NeuralNetworkAnimation;
-
-
