@@ -22,7 +22,7 @@ const NeuralNetworkAnimation = () => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [animationSpeed, setAnimationSpeed] = useState(1);
   const [rotationSpeed, setRotationSpeed] = useState(1.0); // Initial rotation speed
-  const [numNodes, setNumNodes] = useState(50);
+  const [numNodes, setNumNodes] = useState(42);
   const [numConnections, setNumConnections] = useState(100);
   const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [creationRate, setCreationRate] = useState(1); // Nodes per second
