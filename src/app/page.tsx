@@ -97,11 +97,7 @@ const NeuralNetworkAnimation = () => {
 
         let color;
         if (numberOfConnections > 0) {
-          // Normalize the number of connections to a range of 0 to 1
-          const normalizedConnections = Math.min(numberOfConnections, 100) / 100;
-
-          // Get the color based on the number of connections
-          color = getColorForNumberOfConnections(normalizedConnections);
+          color = new THREE.Color(0x7DF9FF); // Electric Blue
         } else {
           color = new THREE.Color(0xAAAAAA); // Gray color
         }
