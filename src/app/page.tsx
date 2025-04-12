@@ -1,450 +1,313 @@
-"use client";
+'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { Button } from '@/components/ui/button';
-import { Icons } from '@/components/icons';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-
-const gradientColors = [
-  0xEE82EE, // Violet
-  0x4B0082, // Indigo
-  0x0000FF, // Blue
-  0x00FF00, // Green
-  0xFFFF00, // Yellow
-  0xFFA500, // Orange
-  0xFF0000  // Red
-];
-
-let nextNodeId = 0;
+import { Button } from '@/components/ui/button';
+import { Icons } from '@/components/icons';
+import { Label } from '@/components/ui/label';
 
 const NeuralNetworkAnimation = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [animationSpeed, setAnimationSpeed] = useState(1);
-  const [rotationSpeed, setRotationSpeed] = useState(1.0); // Initial rotation speed
-  const [numNodes, setNumNodes] = useState(42);
-  const [numConnections, setNumConnections] = useState(0);
-  const [autoCreateNodes, setAutoCreateNodes] = useState(false);
-  const [creationRate, setCreationRate] = useState(1); // Nodes per second
+  const sceneRef = useRef<THREE.Scene>(new THREE.Scene());
+  const cameraRef = useRef<THREE.PerspectiveCamera>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer>(null);
+  const orbitControlsRef = useRef<OrbitControls | null>(null);
+  const animationFrameIdRef = useRef<number>(null);
+  const nodesArrayRef = useRef<THREE.Mesh[]>([]);
+  const connectionsArrayRef = useRef<THREE.Line[]>([]);
+  const [nodes, setNodes] = useState(42);
+  const [connections, setConnections] = useState(0);
+  const [activationSpeed, setActivationSpeed] = useState(50); // Initial activation speed
+  const [rotationSpeed, setRotationSpeed] = useState(50); // Initial rotation speed
   const [zoomLevel, setZoomLevel] = useState(0); // Initial zoom level
-  const [hoveredNodeId, setHoveredNodeId] = useState<number | null>(null);
+  const [autoCreateNodes, setAutoCreateNodes] = useState(false); // Control for automatic node creation
+  const [elementNodeId, setElementNodeId] = useState<number | null>(null);
 
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const animationFrameId = useRef<number>(0);
-  const nodesRef = useRef<THREE.Mesh[]>([]);
-  const connectionsRef = useRef<THREE.Line[]>([]);
-  const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
-  const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
-  const originalNodeColorsRef = useRef<{[key: number]: THREE.Color}>({});
+  // Color scale for node connections, from violet to red
+  const getConnectionColor = useCallback((connectionCount: number) => {
+    const maxConnections = 100;
+    const clampedConnections = Math.min(connectionCount, maxConnections);
+    const hue = 240 - (clampedConnections / maxConnections) * 240; // Violet is 240, Red is 0
+    return `hsl(${hue}, 100%, 50%)`; // Return HSL color
+  }, []);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-
-    const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-    updateCameraPosition(zoomLevel);
-    cameraRef.current = camera;
-
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    renderer.setClearColor(0x121212, 1);
-    rendererRef.current = renderer;
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-
-    // Initialize nodes and connections
-    initializeNetwork(numNodes, numConnections);
-
-    const animate = () => {
-      if (!isPlaying) return;
-
-      controls.update();
-
-      // Rotate the entire scene
-      scene.rotation.x += 0.001 * rotationSpeed;
-      scene.rotation.y += 0.001 * rotationSpeed;
-
-      // Simulate node activation (example)
-      nodesRef.current.forEach((node, index) => {
-        let nodeId = node.userData.id;
-
-        // Determine the number of connections for this node
-        const numberOfConnections = connectionsRef.current.reduce((count, connection) => {
-          const positions = connection.geometry.attributes.position.array;
-          const nodePosition = node.position;
-
-          const startX = positions[0];
-          const startY = positions[1];
-          const startZ = positions[2];
-
-          const endX = positions[3];
-          const endY = positions[4];
-          const endZ = positions[5];
-
-          // let nodeId = node.userData.id;
-          let count_actual = count;
-          if (
-            (startX === nodePosition.x && startY === nodePosition.y && startZ === nodePosition.z) ||
-            (endX === nodePosition.x && endY === nodePosition.y && endZ === nodePosition.z)
-          ) {
-            // return count + 1;
-            count_actual = count_actual + 1;
-          }
-          // return count;
-          // console.log(nodeId, count_actual);
-          return count_actual;
-        }, 0);
-
-
-        const normalizedConnections = Math.min(numberOfConnections, 100) / 100;
-
-        // If the node has no connections, make it gray.
-        let color;
-        if (numberOfConnections === 0) {
-          color = new THREE.Color(0x808080); // Gray color
-        } else {
-          color = getColorForNumberOfConnections(normalizedConnections);
-        }
-
-        // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
-        if (node.material instanceof THREE.MeshBasicMaterial) {
-          node.material.color.set(color);
-          // console.log(nodeId, numberOfConnections, color);
-        }
-      });
-
-      renderer.render(scene, camera);
-      animationFrameId.current = requestAnimationFrame(animate);
-    };
-
-    animationFrameId.current = requestAnimationFrame(animate);
-
-    const handleResize = () => {
-      camera.aspect = canvas.clientWidth / canvas.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    };
-
-      const handleZoom = (event: WheelEvent) => {
-      event.preventDefault();
-      // Adjust zoom level based on mouse wheel delta
-      let zoomDelta = event.deltaY * 0.0001; //ZOOM_SPEED;
-      let newZoomLevel = zoomLevel + zoomDelta;
-
-      // Clamp zoom level to prevent zooming in too close or too far out
-      newZoomLevel = Math.max(0, Math.min(100, newZoomLevel)); // Adjust min and max values as needed
-
-      setZoomLevel(newZoomLevel);
-      updateCameraPosition(newZoomLevel);
-
-      // Prevent default scroll behavior
-      event.preventDefault();
-      };
-
-    const handleMouseMove = (event: MouseEvent) => {
-        if (!canvas) return;
-
-        // Calculate mouse position in normalized device coordinates
-        mouseRef.current.x = (event.clientX / canvas.clientWidth) * 2 - 1;
-        mouseRef.current.y = -(event.clientY / canvas.clientHeight) * 2 + 1;
-
-        raycasterRef.current.setFromCamera(mouseRef.current, camera);
-
-        const intersects = raycasterRef.current.intersectObjects(nodesRef.current);
-
-        if (intersects.length > 0) {
-            const intersectedNode = intersects[0].object as THREE.Mesh;
-            setHoveredNodeId(intersectedNode.userData.id);
-
-             // Store the original color
-            if (intersectedNode.userData.id && !originalNodeColorsRef.current[intersectedNode.userData.id]) {
-              // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
-                originalNodeColorsRef.current[intersectedNode.userData.id] = intersectedNode.material.color.clone();
-            }
-
-            // Change the node color to white
-             // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
-            intersectedNode.material.color.set(0xffffff);
-
-        } else {
-          if (hoveredNodeId !== null && originalNodeColorsRef.current[hoveredNodeId]) {
-                const node = nodesRef.current.find(node => node.userData.id === hoveredNodeId);
-                if (node) {
-                     // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
-                    node.material.color.copy(originalNodeColorsRef.current[hoveredNodeId]);
-                }
-            }
-
-            setHoveredNodeId(null);
-        }
-    };
-
-
-    canvas.addEventListener('wheel', handleZoom);
-    window.addEventListener('resize', handleResize);
-    canvas.addEventListener('mousemove', handleMouseMove);
-
-
-    return () => {
-      cancelAnimationFrame(animationFrameId.current);
-      window.removeEventListener('resize', handleResize);
-      canvas.removeEventListener('wheel', handleZoom);
-      canvas.removeEventListener('mousemove', handleMouseMove);
-      controls.dispose();
-      renderer.dispose();
-    };
-  }, [animationSpeed, isPlaying, numConnections, numNodes, rotationSpeed, zoomLevel]);
-
-  useEffect(() => {
-    if (sceneRef.current) {
-      // Re-initialize network when numNodes or numConnections change
-      clearNetwork();
-      initializeNetwork(numNodes, numConnections);
+  // Update camera position based on zoom level
+  const updateCameraPosition = useCallback((newZoomLevel: number) => {
+    const maxZoom = 10;
+    const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
+    if (cameraRef.current) {
+      cameraRef.current.position.z = maxZoom / zoomFactor;
     }
-  }, [numNodes, numConnections]);
+  }, []);
 
-  useEffect(() => {
-    if (autoCreateNodes) {
-      const intervalId = setInterval(() => {
-        if (sceneRef.current) {
-          createNode();
-          setNumNodes(prevCount => prevCount + 1);
-        }
-      }, 1000 / creationRate);
+  // Initialize network
+  const initializeNetwork = useCallback(() => {
+    let scene: THREE.Scene, camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer;
 
-      return () => clearInterval(intervalId);
+    if (!cameraRef.current) {
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      cameraRef.current = camera;
+    } else {
+      camera = cameraRef.current;
     }
-  }, [autoCreateNodes, creationRate]);
+    scene = sceneRef.current;
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 
-  const createNode = () => {
-    if (!sceneRef.current) return;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0); // Set the background to transparent
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.top = '0';
+    renderer.domElement.style.left = '0';
+    document.getElementById('canvas-container')?.appendChild(renderer.domElement);
 
-    const geometry = new THREE.SphereGeometry(0.05, 32, 32);
-    const material = new THREE.MeshBasicMaterial({ color: 0x7DF9FF });
-    const node = new THREE.Mesh(geometry, material);
-    node.position.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
-    node.userData.id = nextNodeId++;
-    sceneRef.current.add(node);
-    nodesRef.current.push(node);
-  };
-
-  const initializeNetwork = (nodes: number, connections: number) => {
-    if (!sceneRef.current) return;
-
+    const geometry = new THREE.SphereGeometry(0.1, 32, 32);
     const nodesArray: THREE.Mesh[] = [];
-    const connectionsArray: THREE.Line[] = [];
+
+    let nextNodeId = 0; // Start the ID counter
 
     for (let i = 0; i < nodes; i++) {
-      const geometry = new THREE.SphereGeometry(0.05, 32, 32);
-      const material = new THREE.MeshBasicMaterial({ color: 0x7DF9FF });
+      const material = new THREE.MeshBasicMaterial({ color: 0x888888 }); // Default color gray
       const node = new THREE.Mesh(geometry, material);
       node.position.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
-      node.userData = { id: nextNodeId++ };
-      sceneRef.current.add(node);
+      // @ts-expect-error
+      node.userData = { id: nextNodeId++ }; // Assign a unique ID to the node
+      scene.add(node);
       nodesArray.push(node);
     }
 
-    for (let i = 0; i < connections; i++) {
-      const startNode = nodesArray[Math.floor(Math.random() * nodesArray.length)];
-      const endNode = nodesArray[Math.floor(Math.random() * nodesArray.length)];
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x7DF9FF });
+    const connectionsArray: THREE.Line[] = [];
 
-      const material = new THREE.LineBasicMaterial({ color: 0xAAAAAA });
-      const geometry = new THREE.BufferGeometry().setFromPoints([startNode.position.clone(), endNode.position.clone()]);
-      const line = new THREE.Line(geometry, material);
-      sceneRef.current.add(line);
+    for (let i = 0; i < connections; i++) {
+      if (nodesArray.length < 2) break;
+
+      const startNodeIndex = Math.floor(Math.random() * nodesArray.length);
+      const endNodeIndex = Math.floor(Math.random() * nodesArray.length);
+
+      if (startNodeIndex === endNodeIndex) continue;
+
+      const startNode = nodesArray[startNodeIndex];
+      const endNode = nodesArray[endNodeIndex];
+
+      const points = [startNode.position, endNode.position];
+      const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(lineGeometry, lineMaterial);
+      scene.add(line);
       connectionsArray.push(line);
     }
 
-    nodesRef.current = nodesArray;
-    connectionsRef.current = connectionsArray;
-  };
+    const orbitControls = new OrbitControls(camera, renderer.domElement);
+    orbitControls.enableDamping = true;
+    orbitControls.dampingFactor = 0.05;
 
-  const clearNetwork = () => {
-    if (!sceneRef.current) return;
+    camera.position.z = 5;
 
-    nodesRef.current.forEach(node => {
-      sceneRef.current?.remove(node);
-      // @ts-expect-error - Property 'geometry' does not exist on type 'Object3D<Event>'.
-      node.geometry.dispose();
-      // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
-      if (node.material instanceof THREE.Material) {
-        // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
-        node.material.dispose();
+    rendererRef.current = renderer;
+    sceneRef.current = scene;
+    cameraRef.current = camera;
+    orbitControlsRef.current = orbitControls;
+    nodesArrayRef.current = nodesArray;
+    connectionsArrayRef.current = connectionsArray;
+
+    // Raycaster and mouse setup for hover interaction
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    const onMouseMove = (event: MouseEvent) => {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, cameraRef.current);
+
+      const intersects = raycaster.intersectObjects(nodesArrayRef.current);
+
+      if (intersects.length > 0) {
+        const intersectedNode = intersects[0].object as THREE.Mesh;
+        // @ts-expect-error
+        setElementNodeId(intersectedNode.userData.id);
+        intersectedNode.material = new THREE.MeshBasicMaterial({ color: '#FFFFFF' });
+      } else {
+        nodesArrayRef.current.forEach(node => {
+          // @ts-expect-error
+          const connectionCount = connectionsArrayRef.current.filter(conn => conn.geometry.attributes.position.array.includes(node.position.x)).length;
+          // @ts-expect-error
+          (node.material as THREE.MeshBasicMaterial).color.set(getConnectionColor(connectionCount));
+        });
+        setElementNodeId(null);
       }
-    });
+    };
 
-    connectionsRef.current.forEach(connection => {
-      sceneRef.current?.remove(connection);
-      // @ts-expect-error - Property 'geometry' does not exist on type 'Object3D<Event>'.
-      connection.geometry.dispose();
-      // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
-      if (connection.material instanceof THREE.Material) {
-        // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
-        connection.material.dispose();
-      }
-    });
+    window.addEventListener('mousemove', onMouseMove, false);
 
-    nodesRef.current = [];
-    connectionsRef.current = [];
-    originalNodeColorsRef.current = {};
-  };
+    const animate = () => {
+      animationFrameIdRef.current = requestAnimationFrame(animate);
 
-  const frequencyToColor = (frequency: number): THREE.Color => {
-    const red = Math.sin(0.3 * frequency + 0) * 127 + 128;
-    const green = Math.sin(0.3 * frequency + 2) * 127 + 128;
-    const blue = Math.sin(0.3 * frequency + 4) * 127 + 128;
+      // Adjust rotation speed based on slider value
+      const rotationSpeedFactor = (rotationSpeed / 100) * 0.05; // Adjust multiplier to control speed
+      sceneRef.current.rotation.x += rotationSpeedFactor;
+      sceneRef.current.rotation.y += rotationSpeedFactor;
 
-    return new THREE.Color(red / 255, green / 255, blue / 255);
-  };
+      orbitControlsRef.current?.update();
+      rendererRef.current?.render(sceneRef.current, cameraRef.current);
+    };
 
-  const getColorForNumberOfConnections = (normalizedConnections: number): THREE.Color => {
-      // Map the normalized connections to the frequency range
-      const minFrequency = 400; // Violet
-      const maxFrequency = 790; // Red
-      const frequency = minFrequency + (normalizedConnections * (maxFrequency - minFrequency));
-      return frequencyToColor(frequency);
-  };
-
-  const updateCameraPosition = (newZoomLevel: number) => {
-    if (cameraRef.current) {
-      const maxZoom = 10; // Define the maximum zoom level (10x)
-      const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
-      cameraRef.current.position.z = maxZoom / zoomFactor;
-    }
-  };
-
-
-   useEffect(() => {
-    // Ensure camera position is updated on initial load
+    animate();
     updateCameraPosition(zoomLevel);
-  }, []);
 
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove, false);
+      cancelAnimationFrame(animationFrameIdRef.current);
+      renderer.dispose();
+      scene.dispose();
+      geometry.dispose();
+      lineMaterial.dispose();
+      nodesArray.forEach(node => (node.material as THREE.Material).dispose());
+      connectionsArray.forEach(line => (line.material as THREE.Material).dispose());
+      document.getElementById('canvas-container')?.removeChild(renderer.domElement);
+    };
+  }, [nodes, connections, activationSpeed, rotationSpeed, zoomLevel, getConnectionColor, updateCameraPosition]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      cameraRef.current = camera;
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      rendererRef.current = renderer;
+
+      return initializeNetwork();
+    }
+  }, [initializeNetwork]);
+
+  // Automatic node creation logic
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (autoCreateNodes) {
+      intervalId = setInterval(() => {
+        setNodes(prevNodes => prevNodes + 1);
+      }, 1000);
+    }
+
+    return () => clearInterval(intervalId);
+  }, [autoCreateNodes]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#121212] text-white">
-      <h1 className="text-3xl font-bold mb-4">Synaptic Canvas</h1>
-      <canvas ref={canvasRef} className="w-3/4 h-[600px] rounded-lg shadow-lg" />
-      {hoveredNodeId !== null && (
-                <div className="absolute top-0 left-0 bg-black bg-opacity-75 text-white p-2 rounded">
-                    Node ID: {hoveredNodeId}
-                </div>
-            )}
-      <div className="flex flex-col md:flex-row items-center justify-center mt-4 gap-4">
-         <Card className="w-full max-w-sm bg-[#242424] border-none shadow-md">
-          <CardHeader>
-            <CardTitle className="text-white">Network Configuration</CardTitle>
-            <CardDescription className="text-white">Adjust the network structure.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 text-gray-400">
-            <div className="flex items-center space-x-2">
-              <label htmlFor="numNodes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">Nodes</label>
-              <Input
-                type="number"
-                id="numNodes"
-                value={numNodes}
-                onChange={(e) => setNumNodes(parseInt(e.target.value))}
-                className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-20 text-black"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <label htmlFor="numConnections" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">Connections</label>
-              <Input
-                type="number"
-                id="numConnections"
-                value={numConnections}
-                onChange={(e) => setNumConnections(parseInt(e.target.value))}
-                className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-20 text-black"
-              />
-            </div>
-             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="autoCreateNodes"
-                checked={autoCreateNodes}
-                onCheckedChange={(checked) => setAutoCreateNodes(checked)}
-              />
-              <label htmlFor="autoCreateNodes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">Auto Create Nodes</label>
-            </div>
-            {autoCreateNodes && (
+    <>
+      <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', background: '#000' }}>
+        <div id="canvas-container" style={{ width: '100%', height: '100%' }} />
+
+        <div style={{ position: 'absolute', top: '20px', left: '20px', color: '#fff' }}>
+          {elementNodeId !== null && <p>Node ID: {elementNodeId}</p>}
+        </div>
+
+        <div style={{ position: 'absolute', top: '20px', right: '20px', width: '300px', color: '#fff' }}>
+          <Card>
+            <CardHeader style={{ color: 'white' }}>
+              <CardTitle style={{ color: 'white' }}>Animation Controls</CardTitle>
+              <CardDescription style={{ color: 'white' }}>Control the animation playback.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
               <div className="flex items-center space-x-2">
-                <label htmlFor="creationRate" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">Creation Rate (nodes/sec)</label>
-                <Input
-                  type="number"
-                  id="creationRate"
-                  value={creationRate}
-                  onChange={(e) => setCreationRate(parseInt(e.target.value))}
-                  className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-20 text-black"
+                <Label htmlFor="pause" style={{ color: 'gray' }}>
+                  <Button variant="outline" size="sm">
+                    <Icons.pause className="h-4 w-4" />
+                    Pause
+                  </Button>
+                </Label>
+              </div>
+
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="activationSpeed" style={{ color: 'white' }}>Activation Speed: <span style={{ color: 'gray' }}>{activationSpeed}</span></Label>
+                <Slider
+                  id="activationSpeed"
+                  defaultValue={[activationSpeed]}
+                  max={100}
+                  step={1}
+                  onValueChange={(value) => setActivationSpeed(value[0])}
                 />
               </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="w-full max-w-sm bg-[#242424] border-none shadow-md">
-          <CardHeader className="text-white">
-            <CardTitle className="text-white">Animation Controls</CardTitle>
-            <CardDescription className="text-white">Control the animation playback.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="flex items-center space-x-2">
-              <Button onClick={() => setIsPlaying(!isPlaying)} variant="secondary">
-                {isPlaying ? <Icons.pause /> : <Icons.play />}
-                {isPlaying ? 'Pause' : 'Play'}
-              </Button>
-            </div>
-            <div className="flex flex-col items-start space-y-1">
-                <label htmlFor="animationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white">Activation Speed</label>
-              <Slider
-                id="animationSpeed"
-                defaultValue={[animationSpeed]}
-                max={5}
-                min={0.1}
-                step={0.1}
-                onValueChange={(value) => setAnimationSpeed(value[0])}
-              />
-                <span className="text-sm text-muted-foreground">{animationSpeed.toFixed(1)}</span>
-            </div>
-            <div className="flex flex-col items-start space-y-1">
-                <label htmlFor="rotationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white">Rotation Speed</label>
-              <Slider
-                id="rotationSpeed"
-                defaultValue={[rotationSpeed]}
-                max={5}
-                min={0.1}
-                step={0.1}
-                onValueChange={(value) => setRotationSpeed(value[0])}
-              />
-              <span className="text-sm text-muted-foreground">{rotationSpeed.toFixed(1)}</span>
-            </div>
-             <div className="flex flex-col items-start space-y-1">
-                <label htmlFor="zoomLevel" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white">Zoom</label>
-              <Slider
-                id="zoomLevel"
-                defaultValue={[zoomLevel]}
-                max={100}
-                min={0}
-                step={1}
-                onValueChange={(value) => setZoomLevel(value[0])}
-              />
-                <span className="text-sm text-muted-foreground">{zoomLevel} %</span>
-            </div>
-          </CardContent>
-        </Card>
+
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="rotationSpeed" style={{ color: 'white' }}>Rotation Speed: <span style={{ color: 'gray' }}>{rotationSpeed}</span></Label>
+                <Slider
+                  id="rotationSpeed"
+                  defaultValue={[rotationSpeed]}
+                  max={100}
+                  step={1}
+                  onValueChange={(value) => setRotationSpeed(value[0])}
+                />
+              </div>
+
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="zoomLevel" style={{ color: 'white' }}>Zoom Level: <span style={{ color: 'gray' }}>{zoomLevel}</span></Label>
+                <Slider
+                  id="zoomLevel"
+                  defaultValue={[zoomLevel]}
+                  max={100}
+                  step={1}
+                  onValueChange={(value) => {
+                    const newZoomLevel = value[0];
+                    setZoomLevel(newZoomLevel);
+                    updateCameraPosition(newZoomLevel);
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div style={{ position: 'absolute', bottom: '20px', right: '20px', width: '300px', color: '#fff' }}>
+          <Card>
+            <CardHeader style={{ color: 'white' }}>
+              <CardTitle style={{ color: 'white' }}>Network Controls</CardTitle>
+              <CardDescription style={{ color: 'white' }}>Control the network structure.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="nodes" style={{ color: 'gray' }}>Nodes</Label>
+                <input
+                  type="number"
+                  id="nodes"
+                  value={nodes}
+                  onChange={(e) => setNodes(Number(e.target.value))}
+                  style={{ color: 'black' }}
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="connections" style={{ color: 'gray' }}>Connections</Label>
+                <input
+                  type="number"
+                  id="connections"
+                  value={connections}
+                  onChange={(e) => setConnections(Number(e.target.value))}
+                  style={{ color: 'black' }}
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="autoCreateNodes" style={{ color: 'gray' }}>Auto Create Nodes</Label>
+                <input
+                  type="checkbox"
+                  id="autoCreateNodes"
+                  checked={autoCreateNodes}
+                  onChange={(e) => setAutoCreateNodes(e.target.checked)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
-export default NeuralNetworkAnimation;
-
-
+export default function Page() {
+  return (
+    <>
+      <NeuralNetworkAnimation />
+    </>
+  );
+}
