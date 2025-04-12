@@ -246,5 +246,3 @@ const NeuralNetworkAnimation = () => {
 };
 
 export default NeuralNetworkAnimation;
-
-    
