@@ -31,7 +31,7 @@ const NeuralNetworkAnimation = () => {
   const [numConnections, setNumConnections] = useState(0);
   const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [creationRate, setCreationRate] = useState(1); // Nodes per second
-  const [zoomLevel, setZoomLevel] = useState(100); // Initial zoom level
+  const [zoomLevel, setZoomLevel] = useState(0); // Initial zoom level
   const [hoveredNodeId, setHoveredNodeId] = useState<number | null>(null);
 
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -225,7 +225,7 @@ const NeuralNetworkAnimation = () => {
       const material = new THREE.MeshBasicMaterial({ color: 0x7DF9FF });
       const node = new THREE.Mesh(geometry, material);
       node.position.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
-      node.userData.id = nextNodeId++;
+      node.userData = { id: nextNodeId++ };
       sceneRef.current.add(node);
       nodesArray.push(node);
     }
@@ -293,7 +293,7 @@ const NeuralNetworkAnimation = () => {
   const updateCameraPosition = (newZoomLevel: number) => {
     if (cameraRef.current) {
       const maxZoom = 10; // Define the maximum zoom level (10x)
-      const zoomFactor = 1 + ((100 - newZoomLevel) / 100) * (maxZoom - 1);
+      const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
       cameraRef.current.position.z = maxZoom / zoomFactor;
     }
   };
@@ -419,3 +419,4 @@ const NeuralNetworkAnimation = () => {
 };
 
 export default NeuralNetworkAnimation;
+
