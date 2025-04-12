@@ -5,8 +5,6 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Icons } from '@/components/icons';
 import { Label } from '@/components/ui/label';
 
 const NeuralNetworkAnimation = () => {
@@ -36,9 +34,9 @@ const NeuralNetworkAnimation = () => {
 
   // Update camera position based on zoom level
   const updateCameraPosition = useCallback((newZoomLevel: number) => {
-    const maxZoom = 10; // Define the maximum zoom level
-    const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
     if (cameraRef.current) {
+      const maxZoom = 10; // Define the maximum zoom level
+      const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
       cameraRef.current.position.z = maxZoom / zoomFactor;
     }
   }, []);
@@ -232,9 +230,7 @@ const NeuralNetworkAnimation = () => {
       window.removeEventListener('mousemove', onMouseMove, false);
       window.removeEventListener('click', onNodeClick, false);
       cancelAnimationFrame(animationFrameIdRef.current);
-      renderer.dispose();
-
-      // Dispose of scene and its children
+      rendererRef.current?.dispose();
       if (sceneRef.current) {
         sceneRef.current.children.forEach(child => {
           if ((child as THREE.Mesh).geometry) {
@@ -260,7 +256,10 @@ const NeuralNetworkAnimation = () => {
       lineMaterial.dispose();
       nodesArray.forEach(node => (node.material as THREE.Material).dispose());
       connectionsArray.forEach(line => (line.material as THREE.Material).dispose());
-      document.getElementById('canvas-container')?.removeChild(renderer.domElement);
+      const canvasContainer = document.getElementById('canvas-container');
+      if (canvasContainer && rendererRef.current && rendererRef.current.domElement.parentNode === canvasContainer) {
+        canvasContainer.removeChild(rendererRef.current.domElement);
+      }
     };
   }, [nodes, connections, activationSpeed, rotationSpeed, zoomLevel, getConnectionColor, updateCameraPosition, clearScene, clickedNodes]);
 
@@ -287,7 +286,7 @@ const NeuralNetworkAnimation = () => {
 
   return (
     <>
-      <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', background: '#000' }}>
+      <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', background: '#000', color: 'white' }}>
         <div id="canvas-container" style={{ width: '100%', height: '100%' }} />
 
         <div style={{ position: 'absolute', top: '20px', left: '20px', color: '#fff' }}>
@@ -394,3 +393,4 @@ export default function Page() {
     </>
   );
 }
+
