@@ -11,9 +11,12 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const gradientColors = [
+  0xEE82EE, // Violet
+  0x4B0082, // Indigo
   0x0000FF, // Blue
   0x00FF00, // Green
   0xFFFF00, // Yellow
+  0xFFA500, // Orange
   0xFF0000  // Red
 ];
 
@@ -69,17 +72,36 @@ const NeuralNetworkAnimation = () => {
 
       // Simulate node activation (example)
       nodesRef.current.forEach((node, index) => {
-        // Check if the node has connections
-        const hasConnections = connectionsRef.current.some(connection =>
-          connection.geometry.attributes.position.array[0] === node.position.x &&
-          connection.geometry.attributes.position.array[1] === node.position.y &&
-          connection.geometry.attributes.position.array[2] === node.position.z
-        );
+        // Determine the number of connections for this node
+        const numberOfConnections = connectionsRef.current.reduce((count, connection) => {
+          const positions = connection.geometry.attributes.position.array;
+          const nodePosition = node.position;
+
+          const startX = positions[0];
+          const startY = positions[1];
+          const startZ = positions[2];
+
+          const endX = positions[3];
+          const endY = positions[4];
+          const endZ = positions[5];
+
+          if (
+            (startX === nodePosition.x && startY === nodePosition.y && startZ === nodePosition.z) ||
+            (endX === nodePosition.x && endY === nodePosition.y && endZ === nodePosition.z)
+          ) {
+            return count + 1;
+          }
+          return count;
+        }, 0);
+
 
         let color;
-        if (hasConnections) {
-          const activation = Math.sin(Date.now() * 0.001 * animationSpeed + index);
-          color = getColorForActivation(activation);
+        if (numberOfConnections > 0) {
+          // Normalize the number of connections to a range of 0 to 1
+          const normalizedConnections = Math.min(numberOfConnections, 100) / 100;
+
+          // Get the color based on the number of connections
+          color = getColorForNumberOfConnections(normalizedConnections);
         } else {
           color = new THREE.Color(0xAAAAAA); // Gray color
         }
@@ -239,6 +261,15 @@ const NeuralNetworkAnimation = () => {
     }
   };
 
+  const getColorForNumberOfConnections = (normalizedConnections: number): THREE.Color => {
+    const colorIndex = Math.floor(normalizedConnections * (gradientColors.length - 1));
+    const startColor = new THREE.Color(gradientColors[colorIndex]);
+    const endColor = new THREE.Color(gradientColors[colorIndex + 1] || gradientColors[colorIndex]);
+    const colorWeight = normalizedConnections * (gradientColors.length - 1) - colorIndex;
+    const finalColor = startColor.lerp(endColor, colorWeight);
+    return finalColor;
+  };
+
 
    useEffect(() => {
     // Ensure camera position is updated on initial load
@@ -256,7 +287,7 @@ const NeuralNetworkAnimation = () => {
             <CardTitle className="text-white">Network Configuration</CardTitle>
             <CardDescription className="text-white">Adjust the network structure.</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4">
+          <CardContent className="grid gap-4 text-gray-400">
             <div className="flex items-center space-x-2">
               <label htmlFor="numNodes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">Nodes</label>
               <Input
