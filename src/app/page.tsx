@@ -20,6 +20,8 @@ const gradientColors = [
   0xFF0000  // Red
 ];
 
+let nextNodeId = 0;
+
 const NeuralNetworkAnimation = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -29,7 +31,7 @@ const NeuralNetworkAnimation = () => {
   const [numConnections, setNumConnections] = useState(0);
   const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [creationRate, setCreationRate] = useState(1); // Nodes per second
-  const [zoomLevel, setZoomLevel] = useState(0); // Initial zoom level
+  const [zoomLevel, setZoomLevel] = useState(100); // Initial zoom level
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -95,12 +97,11 @@ const NeuralNetworkAnimation = () => {
         }, 0);
 
 
-        let color;
-        if (numberOfConnections > 0) {
-          color = new THREE.Color(0x7DF9FF); // Electric Blue
-        } else {
-          color = new THREE.Color(0xAAAAAA); // Gray color
-        }
+        // Normalize the number of connections to a value between 0 and 1
+        const maxConnections = 100; // Define a maximum number of connections for normalization
+        const normalizedConnections = Math.min(numberOfConnections, maxConnections) / maxConnections;
+
+        const color = getColorForNumberOfConnections(normalizedConnections);
 
         // @ts-expect-error - Property 'material' does not exist on type 'Object3D<Event>'.
         if (node.material instanceof THREE.MeshBasicMaterial) {
@@ -176,6 +177,8 @@ const NeuralNetworkAnimation = () => {
     const material = new THREE.MeshBasicMaterial({ color: 0x7DF9FF });
     const node = new THREE.Mesh(geometry, material);
     node.position.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
+    // @ts-expect-error
+    node.id = nextNodeId++; // Assign a unique ID to the node
     sceneRef.current.add(node);
     nodesRef.current.push(node);
   };
@@ -191,6 +194,8 @@ const NeuralNetworkAnimation = () => {
       const material = new THREE.MeshBasicMaterial({ color: 0x7DF9FF });
       const node = new THREE.Mesh(geometry, material);
       node.position.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
+      // @ts-expect-error
+      node.id = nextNodeId++; // Assign a unique ID to the node
       sceneRef.current.add(node);
       nodesArray.push(node);
     }
@@ -251,9 +256,12 @@ const NeuralNetworkAnimation = () => {
 
   const updateCameraPosition = (newZoomLevel: number) => {
     if (cameraRef.current) {
-      const maxZoom = 10; // Define the maximum zoom level
-      const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
-      cameraRef.current.position.z = maxZoom / zoomFactor;
+      const zoomPercentage = newZoomLevel / 100;
+      const minZoom = 1; // Minimum zoom distance
+      const maxZoom = 10; // Maximum zoom distance
+      const zoomDistance = minZoom + (maxZoom - minZoom) * (1 - zoomPercentage);
+
+      cameraRef.current.position.z = zoomDistance;
     }
   };
 
