@@ -122,8 +122,8 @@ const NeuralNetworkAnimation = () => {
         // // }
       });
 
-      renderer.render(scene, camera);
-      // animationFrameId.current = requestAnimationFrame(animate);
+      // renderer.render(scene, camera);
+      animationFrameId.current = requestAnimationFrame(animate);
     };
 
     animationFrameId.current = requestAnimationFrame(animate);
