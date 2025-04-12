@@ -26,7 +26,7 @@ const NeuralNetworkAnimation = () => {
   const [numConnections, setNumConnections] = useState(100);
   const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [creationRate, setCreationRate] = useState(1); // Nodes per second
-  const [zoomLevel, setZoomLevel] = useState(50); // Initial zoom level
+  const [zoomLevel, setZoomLevel] = useState(100); // Initial zoom level
   const ZOOM_SPEED = 0.01; // Zoom speed
 
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -224,6 +224,11 @@ const NeuralNetworkAnimation = () => {
         cameraRef.current.position.z = 11 - (10 * zoomPercentage); // Adjust zoom range as needed
     }
   };
+
+   useEffect(() => {
+    // Ensure camera position is updated on initial load
+    updateCameraPosition(zoomLevel);
+  }, []);
 
 
   return (
