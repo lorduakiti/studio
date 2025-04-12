@@ -26,7 +26,7 @@ const NeuralNetworkAnimation = () => {
   const [numConnections, setNumConnections] = useState(100);
   const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [creationRate, setCreationRate] = useState(1); // Nodes per second
-  const [zoomLevel, setZoomLevel] = useState(5); // Initial zoom level
+  const [zoomLevel, setZoomLevel] = useState(50); // Initial zoom level
   const ZOOM_SPEED = 0.01; // Zoom speed
 
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -95,7 +95,7 @@ const NeuralNetworkAnimation = () => {
       let newZoomLevel = zoomLevel + zoomDelta;
 
       // Clamp zoom level to prevent zooming in too close or too far out
-      newZoomLevel = Math.max(1, Math.min(10, newZoomLevel)); // Adjust min and max values as needed
+      newZoomLevel = Math.max(0, Math.min(100, newZoomLevel)); // Adjust min and max values as needed
 
       setZoomLevel(newZoomLevel);
       updateCameraPosition(newZoomLevel);
@@ -217,11 +217,12 @@ const NeuralNetworkAnimation = () => {
     return finalColor;
   };
 
-  const updateCameraPosition = (newZoomLevel: number) => {
+   const updateCameraPosition = (newZoomLevel: number) => {
       if (cameraRef.current) {
-          // Calculate the new Z position based on the zoom level
-          cameraRef.current.position.z = 11 - newZoomLevel;
-      }
+        // Calculate the new Z position based on the zoom level
+        const zoomPercentage = newZoomLevel / 100; // Normalize zoom level to 0-1 range
+        cameraRef.current.position.z = 11 - (10 * zoomPercentage); // Adjust zoom range as needed
+    }
   };
 
 
@@ -317,8 +318,8 @@ const NeuralNetworkAnimation = () => {
               <Slider
                 id="zoomLevel"
                 defaultValue={[zoomLevel]}
-                max={10}
-                min={1}
+                max={100}
+                min={0}
                 step={1}
                 onValueChange={(value) => setZoomLevel(value[0])}
               />
