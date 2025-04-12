@@ -31,7 +31,8 @@ const NeuralNetworkAnimation = () => {
   const [numConnections, setNumConnections] = useState(0);
   const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [creationRate, setCreationRate] = useState(1); // Nodes per second
-  const [zoomLevel, setZoomLevel] = useState(0); // Initial zoom level
+  const [zoomLevel, setZoomLevel] = useState(100); // Initial zoom level
+  const [hoveredNodeId, setHoveredNodeId] = useState<number | null>(null);
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -39,6 +40,8 @@ const NeuralNetworkAnimation = () => {
   const animationFrameId = useRef<number>(0);
   const nodesRef = useRef<THREE.Mesh[]>([]);
   const connectionsRef = useRef<THREE.Line[]>([]);
+  const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
+  const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -143,13 +146,36 @@ const NeuralNetworkAnimation = () => {
       event.preventDefault();
       };
 
+    const handleMouseMove = (event: MouseEvent) => {
+        if (!canvas) return;
+
+        // Calculate mouse position in normalized device coordinates
+        mouseRef.current.x = (event.clientX / canvas.clientWidth) * 2 - 1;
+        mouseRef.current.y = -(event.clientY / canvas.clientHeight) * 2 + 1;
+
+        raycasterRef.current.setFromCamera(mouseRef.current, camera);
+
+        const intersects = raycasterRef.current.intersectObjects(nodesRef.current);
+
+        if (intersects.length > 0) {
+            const intersectedNode = intersects[0].object as THREE.Mesh;
+            setHoveredNodeId(intersectedNode.userData.id);
+        } else {
+            setHoveredNodeId(null);
+        }
+    };
+
+
     canvas.addEventListener('wheel', handleZoom);
     window.addEventListener('resize', handleResize);
+    canvas.addEventListener('mousemove', handleMouseMove);
+
 
     return () => {
       cancelAnimationFrame(animationFrameId.current);
       window.removeEventListener('resize', handleResize);
       canvas.removeEventListener('wheel', handleZoom);
+      canvas.removeEventListener('mousemove', handleMouseMove);
       controls.dispose();
       renderer.dispose();
     };
@@ -267,7 +293,7 @@ const NeuralNetworkAnimation = () => {
   const updateCameraPosition = (newZoomLevel: number) => {
     if (cameraRef.current) {
       const maxZoom = 10; // Define the maximum zoom level (10x)
-      const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
+      const zoomFactor = 1 + ((100 - newZoomLevel) / 100) * (maxZoom - 1);
       cameraRef.current.position.z = maxZoom / zoomFactor;
     }
   };
@@ -283,6 +309,11 @@ const NeuralNetworkAnimation = () => {
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#121212] text-white">
       <h1 className="text-3xl font-bold mb-4">Synaptic Canvas</h1>
       <canvas ref={canvasRef} className="w-3/4 h-[600px] rounded-lg shadow-lg" />
+      {hoveredNodeId !== null && (
+                <div className="absolute top-0 left-0 bg-black bg-opacity-75 text-white p-2 rounded">
+                    Node ID: {hoveredNodeId}
+                </div>
+            )}
       <div className="flex flex-col md:flex-row items-center justify-center mt-4 gap-4">
          <Card className="w-full max-w-sm bg-[#242424] border-none shadow-md">
           <CardHeader>
