@@ -297,7 +297,7 @@ const NeuralNetworkAnimation = () => {
               </Button>
             </div>
             <div className="flex flex-col items-start space-y-1">
-              <label htmlFor="animationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Activation Speed</label>
+                <label htmlFor="animationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Activation Speed</label>
               <Slider
                 id="animationSpeed"
                 defaultValue={[animationSpeed]}
@@ -308,7 +308,7 @@ const NeuralNetworkAnimation = () => {
               />
             </div>
             <div className="flex flex-col items-start space-y-1">
-              <label htmlFor="rotationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Rotation Speed</label>
+                <label htmlFor="rotationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Rotation Speed</label>
               <Slider
                 id="rotationSpeed"
                 defaultValue={[rotationSpeed]}
@@ -319,7 +319,7 @@ const NeuralNetworkAnimation = () => {
               />
             </div>
              <div className="flex flex-col items-start space-y-1">
-              <label htmlFor="zoomLevel" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Zoom</label>
+                <label htmlFor="zoomLevel" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Zoom</label>
               <Slider
                 id="zoomLevel"
                 defaultValue={[zoomLevel]}
@@ -337,3 +337,4 @@ const NeuralNetworkAnimation = () => {
 };
 
 export default NeuralNetworkAnimation;
+
