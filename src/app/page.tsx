@@ -331,8 +331,8 @@ const NeuralNetworkAnimation = () => {
                   step={1}
                   onValueChange={(value) => {
                     const newZoomLevel = value[0];
-                    setZoomLevel(newZoomLevel);
                     updateCameraPosition(newZoomLevel);
+                    setZoomLevel(newZoomLevel);
                   }}
                 />
               </div>
@@ -393,4 +393,3 @@ export default function Page() {
     </>
   );
 }
-
