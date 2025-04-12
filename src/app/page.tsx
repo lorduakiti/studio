@@ -20,6 +20,7 @@ const NeuralNetworkAnimation = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [animationSpeed, setAnimationSpeed] = useState(1);
+  const [rotationSpeed, setRotationSpeed] = useState(1.0); // Initial rotation speed
   const [numNodes, setNumNodes] = useState(50);
   const [numConnections, setNumConnections] = useState(100);
 
@@ -58,6 +59,10 @@ const NeuralNetworkAnimation = () => {
 
       controls.update();
 
+      // Rotate the entire scene
+      scene.rotation.x += 0.001 * rotationSpeed;
+      scene.rotation.y += 0.001 * rotationSpeed;
+
       // Simulate node activation (example)
       nodesRef.current.forEach((node, index) => {
         const activation = Math.sin(Date.now() * 0.001 * animationSpeed + index);
@@ -87,7 +92,7 @@ const NeuralNetworkAnimation = () => {
       controls.dispose();
       renderer.dispose();
     };
-  }, [animationSpeed, isPlaying, numConnections, numNodes]);
+  }, [animationSpeed, isPlaying, numConnections, numNodes, rotationSpeed]);
 
   useEffect(() => {
     if (sceneRef.current) {
@@ -212,7 +217,7 @@ const NeuralNetworkAnimation = () => {
               </Button>
             </div>
             <div className="flex items-center space-x-2">
-              <label htmlFor="animationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Speed</label>
+              <label htmlFor="animationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Activation Speed</label>
               <Slider
                 id="animationSpeed"
                 defaultValue={[animationSpeed]}
@@ -220,6 +225,17 @@ const NeuralNetworkAnimation = () => {
                 min={0.1}
                 step={0.1}
                 onValueChange={(value) => setAnimationSpeed(value[0])}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <label htmlFor="rotationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Rotation Speed</label>
+              <Slider
+                id="rotationSpeed"
+                defaultValue={[rotationSpeed]}
+                max={5}
+                min={0.1}
+                step={0.1}
+                onValueChange={(value) => setRotationSpeed(value[0])}
               />
             </div>
           </CardContent>
@@ -230,3 +246,5 @@ const NeuralNetworkAnimation = () => {
 };
 
 export default NeuralNetworkAnimation;
+
+    
