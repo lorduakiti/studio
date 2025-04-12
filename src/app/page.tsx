@@ -27,7 +27,7 @@ const NeuralNetworkAnimation = () => {
   const [autoCreateNodes, setAutoCreateNodes] = useState(false);
   const [creationRate, setCreationRate] = useState(1); // Nodes per second
   const [zoomLevel, setZoomLevel] = useState(0); // Initial zoom level
-  const ZOOM_SPEED = 0.01; // Zoom speed
+  const ZOOM_SPEED = 0.0001; // Zoom speed
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -219,9 +219,8 @@ const NeuralNetworkAnimation = () => {
 
   const updateCameraPosition = (newZoomLevel: number) => {
     if (cameraRef.current) {
-      const maxZoom = 10; // Define the maximum zoom level
-      const zoomFactor = 1 + (newZoomLevel / 100) * (maxZoom - 1);
-      cameraRef.current.position.z = maxZoom / zoomFactor;
+      const zoomFactor = 1 + (newZoomLevel / 100) * 9; // Scale zoom level to 1-10x
+      cameraRef.current.position.z = 10 / zoomFactor; // Invert zoom for natural behavior
     }
   };
 
@@ -244,7 +243,7 @@ const NeuralNetworkAnimation = () => {
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="flex items-center space-x-2">
-              <label htmlFor="numNodes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Nodes</label>
+              <label htmlFor="numNodes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">Nodes</label>
               <Input
                 type="number"
                 id="numNodes"
@@ -254,7 +253,7 @@ const NeuralNetworkAnimation = () => {
               />
             </div>
             <div className="flex items-center space-x-2">
-              <label htmlFor="numConnections" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Connections</label>
+              <label htmlFor="numConnections" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">Connections</label>
               <Input
                 type="number"
                 id="numConnections"
@@ -269,11 +268,11 @@ const NeuralNetworkAnimation = () => {
                 checked={autoCreateNodes}
                 onCheckedChange={(checked) => setAutoCreateNodes(checked)}
               />
-              <label htmlFor="autoCreateNodes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Auto Create Nodes</label>
+              <label htmlFor="autoCreateNodes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">Auto Create Nodes</label>
             </div>
             {autoCreateNodes && (
               <div className="flex items-center space-x-2">
-                <label htmlFor="creationRate" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Creation Rate (nodes/sec)</label>
+                <label htmlFor="creationRate" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">Creation Rate (nodes/sec)</label>
                 <Input
                   type="number"
                   id="creationRate"
@@ -286,7 +285,7 @@ const NeuralNetworkAnimation = () => {
           </CardContent>
         </Card>
         <Card className="w-full max-w-sm bg-[#242424] border-none shadow-md">
-          <CardHeader>
+          <CardHeader className="text-white">
             <CardTitle className="text-white">Animation Controls</CardTitle>
             <CardDescription className="text-white">Control the animation playback.</CardDescription>
           </CardHeader>
@@ -298,7 +297,7 @@ const NeuralNetworkAnimation = () => {
               </Button>
             </div>
             <div className="flex flex-col items-start space-y-1">
-                <label htmlFor="animationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Activation Speed</label>
+                <label htmlFor="animationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white">Activation Speed</label>
               <Slider
                 id="animationSpeed"
                 defaultValue={[animationSpeed]}
@@ -309,7 +308,7 @@ const NeuralNetworkAnimation = () => {
               />
             </div>
             <div className="flex flex-col items-start space-y-1">
-                <label htmlFor="rotationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Rotation Speed</label>
+                <label htmlFor="rotationSpeed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white">Rotation Speed</label>
               <Slider
                 id="rotationSpeed"
                 defaultValue={[rotationSpeed]}
@@ -320,7 +319,7 @@ const NeuralNetworkAnimation = () => {
               />
             </div>
              <div className="flex flex-col items-start space-y-1">
-                <label htmlFor="zoomLevel" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Zoom</label>
+                <label htmlFor="zoomLevel" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white">Zoom</label>
               <Slider
                 id="zoomLevel"
                 defaultValue={[zoomLevel]}
