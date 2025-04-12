@@ -92,7 +92,7 @@ const NeuralNetworkAnimation = () => {
       const handleZoom = (event: WheelEvent) => {
       // Adjust zoom level based on mouse wheel delta
       let zoomDelta = event.deltaY * ZOOM_SPEED;
-      let newZoomLevel = zoomLevel + zoomDelta;
+      let newZoomLevel = zoomLevel - zoomDelta;
 
       // Clamp zoom level to prevent zooming in too close or too far out
       newZoomLevel = Math.max(0, Math.min(100, newZoomLevel)); // Adjust min and max values as needed
