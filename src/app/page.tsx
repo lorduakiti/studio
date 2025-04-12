@@ -45,20 +45,20 @@ const NeuralNetworkAnimation = () => {
     if (sceneRef.current) {
       // Dispose of resources
       sceneRef.current.children.forEach((child) => {
-        if ((child as THREE.Mesh).geometry) {
+        if ((child as THREE.Mesh)?.geometry) {
           ((child as THREE.Mesh).geometry as THREE.BufferGeometry).dispose();
         }
-        if ((child as THREE.Line).geometry) {
+        if ((child as THREE.Line)?.geometry) {
           ((child as THREE.Line).geometry as THREE.BufferGeometry).dispose();
         }
-        if ((child as THREE.Mesh).material) {
+        if ((child as THREE.Mesh)?.material) {
           if (Array.isArray(((child as THREE.Mesh).material as THREE.Material))) {
             ((child as THREE.Mesh).material as THREE.Material[]).forEach(material => material.dispose());
           } else {
             (((child as THREE.Mesh).material as THREE.Material)).dispose();
           }
         }
-        if ((child as THREE.Line).material) {
+        if ((child as THREE.Line)?.material) {
           (((child as THREE.Line).material as THREE.Material)).dispose();
         }
         sceneRef.current.remove(child);
@@ -233,20 +233,20 @@ const NeuralNetworkAnimation = () => {
       rendererRef.current?.dispose();
       if (sceneRef.current) {
         sceneRef.current.children.forEach(child => {
-          if ((child as THREE.Mesh).geometry) {
+          if ((child as THREE.Mesh)?.geometry) {
             ((child as THREE.Mesh).geometry as THREE.BufferGeometry).dispose();
           }
-          if ((child as THREE.Line).geometry) {
+          if ((child as THREE.Line)?.geometry) {
             ((child as THREE.Line).geometry as THREE.BufferGeometry).dispose();
           }
-          if ((child as THREE.Mesh).material) {
+          if ((child as THREE.Mesh)?.material) {
             if (Array.isArray(((child as THREE.Mesh).material as THREE.Material))) {
                 ((child as THREE.Mesh).material as THREE.Material[]).forEach(material => material.dispose());
             } else {
                 (((child as THREE.Mesh).material as THREE.Material)).dispose();
             }
           }
-          if ((child as THREE.Line).material) {
+          if ((child as THREE.Line)?.material) {
             (((child as THREE.Line).material as THREE.Material)).dispose();
           }
         });
@@ -394,3 +394,4 @@ export default function Page() {
     </>
   );
 }
+
